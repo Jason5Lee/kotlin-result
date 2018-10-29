@@ -98,4 +98,3 @@ object Example {
 ## TODO
 
 * Better syntax for doing `.get { return it }`(maybe Coroutine).
-* Better cooperation with JVM Exception.

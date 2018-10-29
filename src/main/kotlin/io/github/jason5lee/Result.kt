@@ -77,3 +77,24 @@ inline fun <T, E, F> Result<T, E>.orElse(f: (E) -> Result<T, F>): Result<T, F> =
     is Ok -> this
     is Err -> f(err)
 }
+
+/**
+ * Calls [block], returns its value as [Ok].
+ *
+ * If any subclass of [Exception] except [InterruptedException] is throw,
+ * it will be caught and returned as [Err].
+ *
+ * [InterruptedException] is treated specially.
+ * When such an exception is caught,
+ * it will be passed to [onInterrupted] and throw.
+ */
+inline fun <T> resultTry(
+        onInterrupted: (InterruptedException) -> Unit = {},
+        block: () -> T): Result<T, Exception> = try {
+    Ok(block())
+} catch (e: InterruptedException) {
+    onInterrupted(e)
+    throw e
+} catch (e: Exception) {
+    Err(e)
+}

@@ -1,11 +1,9 @@
 import io.github.jason5lee.*
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Test
 
-
 class TestResult {
-    data class TestException(val flag: Boolean = true): Exception()
+    data class TestException(val flag: Boolean = true) : Exception()
 
     @Test
     fun testGet() {
@@ -53,7 +51,7 @@ class TestResult {
     fun testAndThen() {
         assertEquals(Ok("1"), Ok(1).andThen { Ok(it.toString()) })
         assertEquals(Err(TestException()),
-            Ok(false).andThen { Err(TestException(!it)) })
+                Ok(false).andThen { Err(TestException(!it)) })
         assertEquals(Err(TestException()),
                 Err(TestException()).andThen<Nothing, TestException, Nothing> {
                     return assertTrue(false)
@@ -69,5 +67,47 @@ class TestResult {
                 Err(TestException()).orElse { Ok(it.flag) })
         assertEquals(Err(TestException()),
                 Err(TestException(false)).orElse { Err(TestException()) })
+    }
+
+    @Test
+    fun testResultTry() {
+        assertEquals(Ok(11), resultTry { 11 })
+        assertEquals(Err(TestException()),
+                resultTry { throw TestException() })
+    }
+
+    @Test(expected = StackOverflowError::class)
+    fun testResultTryOnError() {
+        fun stackOverFlow(a: Int): Int =
+                if (a == 0) {
+                    a
+                } else {
+                    stackOverFlow(a - 1) * a
+                }
+
+        resultTry { stackOverFlow(-1) }
+    }
+
+    @Test
+    fun testInterruption() {
+        var onInterruptedFlag = false
+        var catchFlag = false
+        val thread = Thread {
+            try {
+                resultTry(onInterrupted = { onInterruptedFlag = true }) {
+                    while (true) {
+                        Thread.sleep(10)
+                    }
+                }
+            } catch (_: InterruptedException) {
+                catchFlag = true
+            }
+        }
+        thread.start()
+        assertFalse(onInterruptedFlag)
+        thread.interrupt()
+        thread.join()
+        assertTrue(onInterruptedFlag)
+        assertTrue(catchFlag)
     }
 }
