@@ -6,7 +6,7 @@ Error handling alternative to Exception.
 
 Example for Gradle:
 
-`compile "io.github.jason5lee:kotlin-result:1.0"`
+`compile "io.github.jason5lee:kotlin-result:1.0.1"`
 
 ## Example
 
@@ -14,7 +14,6 @@ Read two real numbers, print the sum of the square roots of them.
 
 ```kotlin
 import io.github.jason5lee.*
-import java.lang.NumberFormatException
 
 object Example {
     private fun readLine(): Result<String, String> =
@@ -26,11 +25,9 @@ object Example {
                 }
             }
 
-    private fun String.parseDouble(): Result<Double, String> = try {
-        Ok(toDouble())
-    } catch (_: NumberFormatException) {
-        Err("\"$this\" is not a valid real number.")
-    }
+    private fun String.parseDouble(): Result<Double, String> = resultTry {
+        toDouble()
+    }.mapErr { "\"$this\" is not a valid real number." }
 
     private fun Double.squareRoot(): Result<Double, String> =
             Math.sqrt(this).let {
